@@ -7,6 +7,12 @@ rd /s /q "%DISTRIBUTE_DIR%"
 
 if exist "%INCLUDE_DIR%" (
 cd "%INCLUDE_DIR%"
+if not exist "%DISTRIBUTE_DIR%define\include" (
+	mkdir "%DISTRIBUTE_DIR%define\include"
+)
+for %%i in (*) do (
+	xcopy /F /I /R /K /Y "%INCLUDE_DIR%%%i" "%DISTRIBUTE_DIR%define\include\"
+)
 for /d %%i in (*) do (
 	if not exist "%DISTRIBUTE_DIR%%%i\include\%%i" (
 		mkdir "%DISTRIBUTE_DIR%%%i\include\%%i"
@@ -15,7 +21,8 @@ for /d %%i in (*) do (
 		xcopy /E /Y "%INCLUDE_DIR%%%i" "%DISTRIBUTE_DIR%%%i\include\%%i"
 		for %%f in ("%INCLUDE_DIR%%%i\*") do (
 			if exist "%INCLUDE_DIR%%%~nfDefine.h" (
-				@xcopy /F /I /R /K /Y "%INCLUDE_DIR%%%~nfDefine.h" "%DISTRIBUTE_DIR%%%i\include\"
+				del /s /q /f "%DISTRIBUTE_DIR%define\include\%%~nfDefine.h"
+				xcopy /F /I /R /K /Y "%INCLUDE_DIR%%%~nfDefine.h" "%DISTRIBUTE_DIR%%%i\include\"
 			)
 		)
 	)

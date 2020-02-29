@@ -32,3 +32,5 @@
 *.app
 
 .*
+obj/
+*.vcxproj.user

@@ -3,7 +3,7 @@
 
 #ifdef _USING_CLI
 #else
-#include "runtime/CObjectCache.h"
+#include "objpool/CObjectCache.h"
 #endif
 
 #endif

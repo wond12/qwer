@@ -4,7 +4,7 @@
 #include "CTypeDefine.h"
 #ifdef _USING_CLI
 #else
-#include "runtime/CObjectResMgr.h"
+#include "objpool/CObjectResMgr.h"
 #endif
 
 #endif

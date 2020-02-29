@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.10
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "qwer_timer", "qwer_timer.vcxproj", "{2628D9FA-C856-483A-BF8A-7882EAAC705F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		d_cli|x86 = d_cli|x86
+		d_no_cli|x86 = d_no_cli|x86
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2628D9FA-C856-483A-BF8A-7882EAAC705F}.d_cli|x86.ActiveCfg = d_cli|Win32
+		{2628D9FA-C856-483A-BF8A-7882EAAC705F}.d_cli|x86.Build.0 = d_cli|Win32
+		{2628D9FA-C856-483A-BF8A-7882EAAC705F}.d_no_cli|x86.ActiveCfg = d_no_cli|Win32
+		{2628D9FA-C856-483A-BF8A-7882EAAC705F}.d_no_cli|x86.Build.0 = d_no_cli|Win32
+		{2628D9FA-C856-483A-BF8A-7882EAAC705F}.Debug|x86.ActiveCfg = Debug|Win32
+		{2628D9FA-C856-483A-BF8A-7882EAAC705F}.Debug|x86.Build.0 = Debug|Win32
+		{2628D9FA-C856-483A-BF8A-7882EAAC705F}.Release|x86.ActiveCfg = Release|Win32
+		{2628D9FA-C856-483A-BF8A-7882EAAC705F}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BAC1B2BC-1416-4B6B-BDF8-16FB623C7775}
+	EndGlobalSection
+EndGlobal

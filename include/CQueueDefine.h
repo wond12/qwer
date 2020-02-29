@@ -3,7 +3,7 @@
 
 #ifdef _USING_CLI
 #else
-#include "runtime/CQueue.h"
+#include "queue/CQueue.h"
 #endif
 
 #endif

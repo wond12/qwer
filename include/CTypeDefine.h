@@ -384,10 +384,6 @@ typedef UINT32 VECINDEX;
 #endif
 
 #ifdef _USING_CLI
-#define PROTOCOL_ID PROTOCOL_ID_()
-#endif
-
-#ifdef _USING_CLI
 #define NON_COPYABLE(tType)
 #else
 #define NON_COPYABLE(tType) private: tType(const tType& orig) { operator=(orig); } tType& operator=(const tType&) { return *this; }

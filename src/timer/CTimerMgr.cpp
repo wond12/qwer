@@ -43,41 +43,40 @@ namespace QWER
 			return 0;
 		UINT32 dwCount = 0;
 		m_qwDeltaTime += (UINT64)(qwDeltaMilliSeconds * m_dTimeScale);
-		while (m_qwDeltaTime >= qwDeltaMilliSeconds) {
+		while ((m_dwMaxCountPerPoll == 0 || dwCount < m_dwMaxCountPerPoll) && m_qwDeltaTime >= qwDeltaMilliSeconds) {
 			m_qwDeltaTime -= qwDeltaMilliSeconds;
 			m_qwCurTime += qwDeltaMilliSeconds;
-			dwCount += _ExecTimer();
+			dwCount += _ExecTimer(m_dwMaxCountPerPoll == 0 ? 0 : (m_dwMaxCountPerPoll - dwCount));
 		}
 		return dwCount;
 	}
 
-	UINT32 CTimerMgr::_ExecTimer()
+	UINT32 CTimerMgr::_ExecTimer(UINT32 dwMaxCount)
 	{
 		PTR(CExecTimerInfoList) poTimers = m_aTimers[0];
 		if (poTimers == NULL_PTR)
 			return 0;
 
 		UINT32 dwCount = 0;
-		for (; m_qwCurTime >= poTimers->m_qwEndTime - m_aTimeOffsets[0] + poTimers->m_wOffset; _Tick(0)) {
+		for (; (dwMaxCount == 0 || dwCount < dwMaxCount) && m_qwCurTime >= poTimers->m_qwEndTime - m_aTimeOffsets[0] + poTimers->m_wOffset; _Tick(0)) {
 			PTR(CExecTimerInfo) poExecTimerInfo = TO_PTR2(poTimers->m_oExecTimerInfo.at(poTimers->m_wOffset));
 #ifdef _USING_CLI
 			if (poExecTimerInfo == NULL_PTR)
 				continue;
 #endif
-			int dwSize = poExecTimerInfo->m_oExecTimerInfo.size();
-			for (int i = 0; i != dwSize; ++i) {
-				CONST_REF(STimerUID) rsTimerUID = poExecTimerInfo->m_oExecTimerInfo[i].m_sTimerUID;
+			for (; (dwMaxCount == 0 || dwCount < dwMaxCount) && !poExecTimerInfo->m_oExecTimerInfo.IsEmpty(); poExecTimerInfo->m_oExecTimerInfo.Pop()) {
+				CONST_REF(STimerUID) rsTimerUID = poExecTimerInfo->m_oExecTimerInfo.At(0).m_sTimerUID;
 				PTR(CTimer) poTimer = m_poTimerMgr->GetObj(rsTimerUID.ToUINT64());
 				if (poTimer != NULL_PTR) {
 					if (IS_NOT_NULL_DELEGATE(poTimer->m_cbOnTimer)) {
 						++dwCount;
 						poTimer->m_cbOnTimer(rsTimerUID, poTimer->m_dwCurrent++, poTimer->m_dwCount);
-						if (IsRunningTimer(rsTimerUID)) {
-							if (poTimer->m_dwCount == 0 || poTimer->m_dwCurrent < poTimer->m_dwCount)
-								_AddTimer(rsTimerUID, poTimer->m_qwFirstTimeoutTime + poTimer->m_qwIntervalMilliSeconds * poTimer->m_dwCurrent);
-							else
-								StopTimer(rsTimerUID);
-						}
+					}
+					if (IsRunningTimer(rsTimerUID)) {
+						if (poTimer->m_dwCount == 0 || poTimer->m_dwCurrent < poTimer->m_dwCount)
+							_AddTimer(rsTimerUID, poTimer->m_qwFirstTimeoutTime + poTimer->m_qwIntervalMilliSeconds * poTimer->m_dwCurrent);
+						else
+							StopTimer(rsTimerUID);
 					}
 				}
 			}
@@ -93,20 +92,14 @@ namespace QWER
 		if (poCurTimers == NULL_PTR)
 			return;
 		PTR(CExecTimerInfo) poPreExecInfo = TO_PTR2(poCurTimers->m_oExecTimerInfo.at(poCurTimers->m_wOffset));
-#ifdef _USING_CLI
-		if (poPreExecInfo != NULL_PTR)
-			TO_PTR(poCurTimers->m_oExecTimerInfo.m_oExecTimerInfo)[poCurTimers->m_wOffset] = NULL_PTR;
-#else
-		{
-			std::vector<STimerInfo> tmp;
-			poPreExecInfo->m_oExecTimerInfo.swap(tmp);
-		}
-#endif
+		if (poPreExecInfo != NULL_PTR && poPreExecInfo->m_oExecTimerInfo.IsEmpty() == false)
+			return;
+
 		UINT64 timeInterval = wLevel == 0 ? m_aTimeOffsets[wLevel] : m_aTimeOffsets[wLevel] - m_aTimeOffsets[wLevel - 1];
 		UINT64 qwStep = (m_aTimeOffsets[wLevel] - (wLevel == 0 ? 0 : m_aTimeOffsets[wLevel - 1])) / m_aTimeOffsets[0];
 		if (wLevel == 0 && poCurTimers->m_wOffset >= poCurTimers->m_oExecTimerInfo.size()) {
 			if (m_qwCurTime >= poCurTimers->m_qwEndTime)
-				poCurTimers->m_wOffset = m_aTimeOffsets[wLevel] - 1;
+				poCurTimers->m_wOffset = (UINT16)m_aTimeOffsets[wLevel] - 1;
 			else
 				poCurTimers->m_wOffset = (UINT16)((m_qwCurTime + timeInterval - poCurTimers->m_qwEndTime) / qwStep);
 		}
@@ -132,21 +125,22 @@ namespace QWER
 		}
 		PTR(CExecTimerInfoList) poNextTimers = m_aTimers[wLevel + 1];
 		PTR(CExecTimerInfo) poNextTimer = TO_PTR2(poNextTimers->m_oExecTimerInfo.at(poNextTimers->m_wOffset));
-		_Tick(wLevel + 1);
 #ifdef _USING_CLI
 		if (poNextTimer == NULL_PTR)
 			return;
 #endif
 		UINT64 beginTime = poCurTimers->m_qwEndTime - timeInterval;
-		for (int i = 0; i != poNextTimer->m_oExecTimerInfo.size(); ++i) {
-			CONST_REF(STimerInfo) execInfo = poNextTimer->m_oExecTimerInfo.at(i);
+		for (int i = 0; i != poNextTimer->m_oExecTimerInfo.GetCount(); ++i) {
+			CONST_REF(STimerInfo) execInfo = poNextTimer->m_oExecTimerInfo.At(i);
 			UINT16 offset = (UINT16)((execInfo.m_qwExecTime - beginTime) / qwStep);
 #ifdef _USING_CLI
 			if (poCurTimers->m_oExecTimerInfo.at(offset) == null)
 				TO_PTR(poCurTimers->m_oExecTimerInfo)[offset] = QNEW CVector(STimerInfo);
 #endif
-			poCurTimers->m_oExecTimerInfo.at(offset).m_oExecTimerInfo.push_back(execInfo);
+			poCurTimers->m_oExecTimerInfo.at(offset).m_oExecTimerInfo.Push(execInfo);
 		}
+		poNextTimer->m_oExecTimerInfo.Clear();
+		_Tick(wLevel + 1);
 	}
 
     STimerUID CTimerMgr::StartTimer(UINT64 dwMilliSeconds, CONST_PTR_OR_REF(DOnTimer) ronTimer)
@@ -204,7 +198,7 @@ namespace QWER
 			if (poExecTimerInfo == NULL_PTR)
 				poExecTimerInfo = TO_PTR(poCurTimers->m_oExecTimerInfo)[wOffset] = QNEW CExecTimerInfo();
 #endif
-			poExecTimerInfo->m_oExecTimerInfo.push_back(STimerInfo(qwExecTime, rsTimerUID));
+			poExecTimerInfo->m_oExecTimerInfo.Push(STimerInfo(qwExecTime, rsTimerUID));
 			break;
 		}
 		if (!bAdd) {

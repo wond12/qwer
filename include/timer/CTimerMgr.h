@@ -37,10 +37,13 @@ namespace QWER
         BOOLN IsRunningTimer(CONST_REF(STimerUID) rsTimerUID) QCONST_FUNC;
         void StopTimer(CONST_REF(STimerUID) rsTimerUID);
 
+		inline UINT32 GetMaxCountPerPoll() QCONST_FUNC { return m_dwMaxCountPerPoll; }
+		inline void SetMaxCountPerPoll(UINT32 dwMaxCountPerPoll) { m_dwMaxCountPerPoll = dwMaxCountPerPoll; }
+
 	private:
 		CUniquePtr(CTimer) _NewTimer(UINT16 wObjType);
 		void _AddTimer(CONST_REF(STimerUID) rsTimerUID,	UINT64 qwExecTime);
-		UINT32 _ExecTimer();
+		UINT32 _ExecTimer(UINT32 dwMaxCount);
 		void _Tick(UINT16 wLevel);
 
 	private:
@@ -60,6 +63,7 @@ namespace QWER
 		PTR(CVector(STimerInfo)) m_poExtTimers = NULL_PTR;
 		double m_dTimeScale = 0;
 		UINT64 m_qwDeltaTime = 0;
+		UINT32 m_dwMaxCountPerPoll = 100;
 	};
 };
 

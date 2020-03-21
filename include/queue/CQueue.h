@@ -49,6 +49,38 @@ namespace QWER
 		}
 
 #ifndef _USING_CLI
+		CQueue(const CQueue& roQueue)
+		{
+			operator=(roQueue);
+		}
+
+		CQueue& operator=(const CQueue& roQueue)
+		{
+			UINT32 dwCount = roQueue.GetCount();
+			if (dwCount == 0) {
+				Clear();
+				return *this;
+			}
+
+			if (m_dwCapacity + 1 < dwCount) {
+				_DestoryList(m_oList);
+				m_dwCapacity = dwCount + 1;
+				_CreateList(m_dwCapacity);
+			}
+
+			int dwEnd = roQueue.m_dwEnd;
+			if (roQueue.m_dwEnd < roQueue.m_dwBegin)
+				dwEnd = roQueue.m_dwCapacity;
+			memcpy(m_oList, roQueue.m_oList + roQueue.m_dwBegin, (dwEnd - roQueue.m_dwBegin) * sizeof(T));
+			if (roQueue.m_dwEnd < roQueue.m_dwBegin)
+				memcpy(m_oList + dwEnd - roQueue.m_dwBegin, roQueue.m_oList, roQueue.m_dwEnd * sizeof(T));
+
+			m_dwBegin = 0;
+			m_dwEnd = dwCount;
+
+			return *this;
+		}
+
 		~CQueue()
 		{
 			_DestoryList(m_oList);
@@ -381,19 +413,6 @@ namespace QWER
 #endif
 			return dwCount;
 		}
-
-#ifndef _USING_CLI
-	private:
-		CQueue(CONST_REF(CQueue) roQueue)
-		{
-			operator=(roQueue);
-		}
-
-		REF(CQueue) operator=(CONST_REF(CQueue) roQueue)
-		{
-			return this;
-		}
-#endif
 
 	private:
 #ifdef _USING_CLI
